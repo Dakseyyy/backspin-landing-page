@@ -31,13 +31,27 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } 
+  },
 };
 
 const cardVariants = {
   initial: { opacity: 0, y: 30, scale: 0.97 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } },
-  exit: { opacity: 0, y: -20, scale: 0.97, transition: { duration: 0.3, ease: "easeIn" as const } },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1, 
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } 
+  },
+  exit: { 
+    opacity: 0, 
+    y: -20, 
+    scale: 0.97, 
+    transition: { duration: 0.3, ease: "easeIn" as const } 
+  },
 };
 
 const Index = () => {
@@ -98,34 +112,37 @@ const Index = () => {
       <motion.img
         src={heroBg}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover"
+        // Added transform-gpu to force hardware acceleration on the large image
+        className="absolute inset-0 w-full h-full object-cover transform-gpu"
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
         transition={{ duration: 1.8, ease: "easeOut" }}
+        style={{ willChange: "transform" }}
       />
       <div className="absolute inset-0 bg-background/70" />
 
-      {/* Floating orbs */}
+      {/* Floating orbs - Added transform-gpu and willChange to stop heavy mobile repaints */}
       <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]"
+        className="absolute w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] transform-gpu"
         animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        style={{ top: "10%", left: "20%" }}
+        style={{ top: "10%", left: "20%", willChange: "transform" }}
       />
       <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full bg-accent/10 blur-[100px]"
+        className="absolute w-[400px] h-[400px] rounded-full bg-accent/10 blur-[100px] transform-gpu"
         animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        style={{ bottom: "10%", right: "15%" }}
+        style={{ bottom: "10%", right: "15%", willChange: "transform" }}
       />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-lg mx-auto px-6 py-12">
         <motion.div
-          className="text-center mb-10"
+          className="text-center mb-10 transform-gpu"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{ willChange: "transform, opacity" }}
         >
           <h1 className="text-5xl font-bold tracking-tight text-foreground mb-2">
             Backspin <span className="text-gradient">Games</span>
@@ -137,7 +154,15 @@ const Index = () => {
 
         <div className="glass-card p-8 glow-primary overflow-hidden">
           <AnimatePresence mode="wait">
-            <motion.div key={step} variants={cardVariants} initial="initial" animate="animate" exit="exit">
+            <motion.div 
+              key={step} 
+              variants={cardVariants} 
+              initial="initial" 
+              animate="animate" 
+              exit="exit"
+              className="transform-gpu"
+              style={{ willChange: "transform, opacity" }}
+            >
               {step === "state" && <StateStep onAnswer={handleStateAnswer} />}
               {step === "age" && <AgeStep onAnswer={handleAgeAnswer} />}
               {step === "eligible" && <EligibleStep onCtaClick={handleCtaClick} affiliateLink={affiliateLink} />}
@@ -148,7 +173,13 @@ const Index = () => {
 
         <AnimatePresence>
           {step === "state" && (
-            <motion.div className="mt-10 space-y-4" variants={container} initial="hidden" animate="show" exit={{ opacity: 0, transition: { duration: 0.2 } }}>
+            <motion.div 
+              className="mt-10 space-y-4 transform-gpu" 
+              variants={container} 
+              initial="hidden" 
+              animate="show" 
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            >
               <USP icon={<Zap className="w-5 h-5 text-accent" />} text="Instant Withdrawals via PayPal & More" />
               <USP icon={<Shield className="w-5 h-5 text-accent" />} text="100% Skill-Based. Zero Bots. Every match is fair." />
               <USP icon={<DollarSign className="w-5 h-5 text-accent" />} text="Win Real Cash — Not Just Points." />
@@ -161,7 +192,7 @@ const Index = () => {
 };
 
 const USP = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <motion.div variants={item} className="flex items-center gap-3 text-muted-foreground">
+  <motion.div variants={item} className="flex items-center gap-3 text-muted-foreground transform-gpu">
     {icon} <span className="text-sm">{text}</span>
   </motion.div>
 );
@@ -174,7 +205,7 @@ const StateStep = ({ onAnswer }: { onAnswer: (inExcluded: boolean) => void }) =>
     </div>
     <motion.div className="flex flex-wrap gap-2 justify-center" variants={container} initial="hidden" animate="show">
       {EXCLUDED_STATES.map((state) => (
-        <motion.span key={state} variants={item} className="px-3 py-1.5 rounded-full text-sm bg-secondary text-secondary-foreground">{state}</motion.span>
+        <motion.span key={state} variants={item} className="px-3 py-1.5 rounded-full text-sm bg-secondary text-secondary-foreground transform-gpu">{state}</motion.span>
       ))}
     </motion.div>
     <div className="flex gap-3">
@@ -199,7 +230,12 @@ const AgeStep = ({ onAnswer }: { onAnswer: (is18: boolean) => void }) => (
 
 const EligibleStep = ({ onCtaClick, affiliateLink }: { onCtaClick: () => void, affiliateLink: string }) => (
   <div className="space-y-6 text-center">
-    <motion.div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}>
+    <motion.div 
+      className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto transform-gpu" 
+      initial={{ scale: 0 }} 
+      animate={{ scale: 1 }} 
+      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+    >
       <Check className="w-8 h-8 text-green-500" />
     </motion.div>
     <div>
@@ -209,8 +245,10 @@ const EligibleStep = ({ onCtaClick, affiliateLink }: { onCtaClick: () => void, a
     <motion.a
       href={affiliateLink}
       onClick={onCtaClick}
-      className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-primary"
-      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-primary transform-gpu"
+      whileHover={{ scale: 1.03 }} 
+      whileTap={{ scale: 0.98 }} 
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       Start Playing Now →
     </motion.a>
@@ -219,7 +257,12 @@ const EligibleStep = ({ onCtaClick, affiliateLink }: { onCtaClick: () => void, a
 
 const IneligibleStep = () => (
   <div className="space-y-6 text-center">
-    <motion.div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}>
+    <motion.div 
+      className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto transform-gpu" 
+      initial={{ scale: 0 }} 
+      animate={{ scale: 1 }} 
+      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+    >
       <X className="w-8 h-8 text-destructive" />
     </motion.div>
     <h2 className="text-2xl font-semibold text-foreground mb-2">Sorry, You're Not Eligible</h2>
@@ -230,8 +273,11 @@ const IneligibleStep = () => (
 const QuizButton = ({ variant, onClick, children }: any) => (
   <motion.button
     onClick={onClick}
-    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 17 }}
-    className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold text-base transition-colors ${variant === "primary" ? "bg-primary text-primary-foreground hover:brightness-110 glow-primary" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+    whileHover={{ scale: 1.03 }} 
+    whileTap={{ scale: 0.97 }} 
+    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold text-base transition-colors transform-gpu ${variant === "primary" ? "bg-primary text-primary-foreground hover:brightness-110 glow-primary" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+    style={{ willChange: "transform" }}
   >
     {children}
   </motion.button>
