@@ -121,9 +121,7 @@ const Index = () => {
         <AnimatePresence>
           {step === "state" && (
             <motion.div className="mt-10 space-y-4 transform-gpu" variants={container} initial="hidden" animate="show" exit={{ opacity: 0 }}>
-              <USP icon={<Zap className="w-5 h-5 text-accent" />} text="Instant Withdrawals via PayPal & More" />
-              <USP icon={<Shield className="w-5 h-5 text-accent" />} text="100% Skill-Based. Zero Bots." />
-              <USP icon={<DollarSign className="w-5 h-5 text-accent" />} text="Win Real Cash — Not Just Points." />
+
             </motion.div>
           )}
         </AnimatePresence>
