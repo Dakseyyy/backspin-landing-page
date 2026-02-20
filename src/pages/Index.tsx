@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { Check, X, DollarSign, Shield, Zap } from "lucide-react";
 
@@ -14,74 +15,127 @@ const EXCLUDED_STATES = [
 
 type Step = "state" | "age" | "eligible" | "ineligible";
 
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+};
+
+const cardVariants = {
+  initial: { opacity: 0, y: 30, scale: 0.97 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+  exit: { opacity: 0, y: -20, scale: 0.97, transition: { duration: 0.3, ease: "easeIn" as const } },
+};
+
 const Index = () => {
   const [step, setStep] = useState<Step>("state");
-  const [selectedState, setSelectedState] = useState<string | null>(null);
 
   const handleStateAnswer = (inExcluded: boolean) => {
-    if (inExcluded) {
-      setStep("ineligible");
-    } else {
-      setStep("age");
-    }
+    setStep(inExcluded ? "ineligible" : "age");
   };
 
   const handleAgeAnswer = (is18: boolean) => {
-    if (is18) {
-      setStep("eligible");
-    } else {
-      setStep("ineligible");
-    }
+    setStep(is18 ? "eligible" : "ineligible");
   };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
-      <img
+      <motion.img
         src={heroBg}
         alt=""
         className="absolute inset-0 w-full h-full object-cover"
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.8, ease: "easeOut" }}
       />
       <div className="absolute inset-0 bg-background/70" />
+
+      {/* Floating orbs */}
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]"
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        style={{ top: "10%", left: "20%" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full bg-accent/10 blur-[100px]"
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        style={{ bottom: "10%", right: "15%" }}
+      />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-lg mx-auto px-6 py-12">
         {/* Logo */}
-        <div className="text-center mb-10 animate-fade-up">
+        <motion.div
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <h1 className="text-5xl font-bold tracking-tight text-foreground mb-2">
-            Backspin <span className="text-gradient">Games</span>
+            Backspin{" "}
+            <span className="text-gradient">Games</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <motion.p
+            className="text-muted-foreground text-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
             Play. Compete. Get Paid.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Quiz Card */}
-        <div className="glass-card p-8 glow-primary animate-scale-in">
-          {step === "state" && <StateStep onAnswer={handleStateAnswer} />}
-          {step === "age" && <AgeStep onAnswer={handleAgeAnswer} />}
-          {step === "eligible" && <EligibleStep />}
-          {step === "ineligible" && <IneligibleStep />}
+        <div className="glass-card p-8 glow-primary overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              variants={cardVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {step === "state" && <StateStep onAnswer={handleStateAnswer} />}
+              {step === "age" && <AgeStep onAnswer={handleAgeAnswer} />}
+              {step === "eligible" && <EligibleStep />}
+              {step === "ineligible" && <IneligibleStep />}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* USPs */}
-        {step === "state" && (
-          <div className="mt-10 space-y-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <USP icon={<Zap className="w-5 h-5 text-accent" />} text="Instant Withdrawals via PayPal & More" />
-            <USP icon={<Shield className="w-5 h-5 text-accent" />} text="100% Skill-Based. Zero Bots. Every match is fair." />
-            <USP icon={<DollarSign className="w-5 h-5 text-accent" />} text="Win Real Cash — Not Just Points." />
-          </div>
-        )}
+        <AnimatePresence>
+          {step === "state" && (
+            <motion.div
+              className="mt-10 space-y-4"
+              variants={container}
+              initial="hidden"
+              animate="show"
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            >
+              <USP icon={<Zap className="w-5 h-5 text-accent" />} text="Instant Withdrawals via PayPal & More" />
+              <USP icon={<Shield className="w-5 h-5 text-accent" />} text="100% Skill-Based. Zero Bots. Every match is fair." />
+              <USP icon={<DollarSign className="w-5 h-5 text-accent" />} text="Win Real Cash — Not Just Points." />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
 const USP = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <div className="flex items-center gap-3 text-muted-foreground">
+  <motion.div variants={item} className="flex items-center gap-3 text-muted-foreground">
     {icon}
     <span className="text-sm">{text}</span>
-  </div>
+  </motion.div>
 );
 
 const StateStep = ({ onAnswer }: { onAnswer: (inExcluded: boolean) => void }) => (
@@ -92,16 +146,22 @@ const StateStep = ({ onAnswer }: { onAnswer: (inExcluded: boolean) => void }) =>
         Are you located in any of these states?
       </h2>
     </div>
-    <div className="flex flex-wrap gap-2 justify-center">
+    <motion.div
+      className="flex flex-wrap gap-2 justify-center"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {EXCLUDED_STATES.map((state) => (
-        <span
+        <motion.span
           key={state}
+          variants={item}
           className="px-3 py-1.5 rounded-full text-sm bg-secondary text-secondary-foreground"
         >
           {state}
-        </span>
+        </motion.span>
       ))}
-    </div>
+    </motion.div>
     <div className="flex gap-3">
       <QuizButton variant="secondary" onClick={() => onAnswer(true)}>
         <X className="w-4 h-4" /> Yes, I am
@@ -134,9 +194,14 @@ const AgeStep = ({ onAnswer }: { onAnswer: (is18: boolean) => void }) => (
 
 const EligibleStep = () => (
   <div className="space-y-6 text-center">
-    <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto">
+    <motion.div
+      className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto"
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+    >
       <Check className="w-8 h-8 text-success" />
-    </div>
+    </motion.div>
     <div>
       <h2 className="text-2xl font-semibold text-foreground mb-2">
         You're Eligible! 🎉
@@ -145,20 +210,28 @@ const EligibleStep = () => (
         You qualify to play and win real cash on Backspin Games.
       </p>
     </div>
-    <a
+    <motion.a
       href="#"
-      className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg transition-all hover:brightness-110 glow-primary"
+      className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-primary"
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       Start Playing Now →
-    </a>
+    </motion.a>
   </div>
 );
 
 const IneligibleStep = () => (
   <div className="space-y-6 text-center">
-    <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
+    <motion.div
+      className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto"
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+    >
       <X className="w-8 h-8 text-destructive" />
-    </div>
+    </motion.div>
     <div>
       <h2 className="text-2xl font-semibold text-foreground mb-2">
         Sorry, You're Not Eligible
@@ -179,16 +252,19 @@ const QuizButton = ({
   onClick: () => void;
   children: React.ReactNode;
 }) => (
-  <button
+  <motion.button
     onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold text-base transition-all ${
+    whileHover={{ scale: 1.03 }}
+    whileTap={{ scale: 0.97 }}
+    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold text-base transition-colors ${
       variant === "primary"
         ? "bg-primary text-primary-foreground hover:brightness-110 glow-primary"
         : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
     }`}
   >
     {children}
-  </button>
+  </motion.button>
 );
 
 export default Index;
