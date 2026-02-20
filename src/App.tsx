@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import StandaloneUI from "./components/StandaloneUI"; // We will create this next
+import StandaloneUI from "./components/StandaloneUI.jsx"; // We will create this next
 
 const queryClient = new QueryClient();
 
