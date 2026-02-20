@@ -59,7 +59,7 @@ const Index = () => {
     if (typeof window !== "undefined" && window.snaptr) {
       let snapEvent = 'PAGE_VIEW';
       if (eventName === 'ViewContent') snapEvent = 'PAGE_VIEW';
-      if (eventName === 'SubmitForm') snapEvent = 'SIGN_UP';
+      if (eventName === 'SubmitForm') snapEvent = 'VIEW_CONTENT';
       if (eventName === 'ClickButton') snapEvent = 'AD_CLICK';
       
       window.snaptr('track', snapEvent);
