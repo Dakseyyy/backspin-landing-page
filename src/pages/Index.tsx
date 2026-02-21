@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { Check, X, DollarSign, Shield, Zap } from "lucide-react";
@@ -18,48 +18,42 @@ const EXCLUDED_STATES = [
 
 type Step = "state" | "age" | "eligible" | "ineligible";
 
-// Animation configs
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
-const item = { 
-  hidden: { opacity: 0, y: 12 }, 
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } } 
-};
-const cardVariants = {
-  initial: { opacity: 0, y: 30, scale: 0.97 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } },
-  exit: { opacity: 0, y: -20, scale: 0.97, transition: { duration: 0.3, ease: "easeIn" as const } },
-};
-
 const Index = () => {
   const [step, setStep] = useState<Step>("state");
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // Detect Click IDs
-  const ttclid = urlParams.get("ttclid");
-  const sccid = urlParams.get("ScCid"); // Snap's standard Click ID parameter
 
-  // Generate Affiliate Link based on source
-  let affiliateLink = BASE_AFFILIATE_URL;
-  if (ttclid) {
-    affiliateLink += `&aff_sub=${ttclid}&ttclid=${ttclid}`;
-  } else if (sccid) {
-    affiliateLink += `&aff_sub=${sccid}&sccid=${sccid}`;
-  }
+  // Stable Affiliate Link Generation
+  const affiliateLink = useMemo(() => {
+    if (typeof window === "undefined") return BASE_AFFILIATE_URL;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const ttclid = urlParams.get("ttclid");
+    const sccid = urlParams.get("ScCid"); // Snapchat is case-sensitive (ScCid)
 
-  // Combined Tracking Helper
+    let newLink = BASE_AFFILIATE_URL;
+
+    if (ttclid) {
+      newLink += `&aff_sub=${ttclid}&ttclid=${ttclid}`;
+    } else if (sccid) {
+      // We pass ScCid into aff_sub so your postback {aff_sub} works for both
+      newLink += `&aff_sub=${sccid}&sccid=${sccid}`;
+    }
+    
+    return newLink;
+  }, []);
+
   const track = (eventName: string) => {
     console.log(`📡 [Tracking] Firing: ${eventName}`);
 
-    // TikTok Logic
+    // TikTok
     if (typeof window !== "undefined" && window.ttq) {
       window.ttq.track(eventName, { content_name: 'Backspin_Games' });
     }
 
-    // Snapchat Logic
+    // Snapchat
     if (typeof window !== "undefined" && window.snaptr) {
       let snapEvent = 'PAGE_VIEW';
       if (eventName === 'ViewContent') snapEvent = 'PAGE_VIEW';
-      if (eventName === 'SubmitForm') snapEvent = 'VIEW_CONTENT';
+      if (eventName === 'SubmitForm') snapEvent = 'VIEW_CONTENT'; 
       if (eventName === 'ClickButton') snapEvent = 'AD_CLICK';
       
       window.snaptr('track', snapEvent);
@@ -67,13 +61,8 @@ const Index = () => {
   };
 
   const handleStateAnswer = (inExcluded: boolean) => {
-    // TRIGGER: User interacted with the quiz (Step 1)
-    // As per your request, we fire ViewContent here instead of on page load.
     track("ViewContent");
-    
-    // We also track the form submission progress
     track("SubmitForm"); 
-    
     setStep(inExcluded ? "ineligible" : "age");
   };
 
@@ -81,10 +70,16 @@ const Index = () => {
     setStep(is18 ? "eligible" : "ineligible");
   };
 
-  const handleCtaClick = () => {
-    // TRIGGER: Final Click on the Affiliate Link
+  const handleCtaClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Stop the default <a> jump
     track("ClickButton");
+    
     console.log(`🔗 Redirecting to: ${affiliateLink}`);
+    
+    // Tiny timeout to allow the pixel to fire before leaving the page
+    setTimeout(() => {
+      window.location.href = affiliateLink;
+    }, 150);
   };
 
   return (
@@ -109,7 +104,7 @@ const Index = () => {
 
         <div className="glass-card p-8 glow-primary overflow-hidden">
           <AnimatePresence mode="wait">
-            <motion.div key={step} variants={cardVariants} initial="initial" animate="animate" exit="exit" className="transform-gpu">
+            <motion.div key={step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               {step === "state" && <StateStep onAnswer={handleStateAnswer} />}
               {step === "age" && <AgeStep onAnswer={handleAgeAnswer} />}
               {step === "eligible" && <EligibleStep onCtaClick={handleCtaClick} affiliateLink={affiliateLink} />}
@@ -117,23 +112,12 @@ const Index = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-
-        <AnimatePresence>
-          {step === "state" && (
-            <motion.div className="mt-10 space-y-4 transform-gpu" variants={container} initial="hidden" animate="show" exit={{ opacity: 0 }}>
-
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-// Sub-components
-const USP = ({ icon, text }: any) => (
-  <motion.div variants={item} className="flex items-center gap-3 text-muted-foreground"><>{icon} <span className="text-sm">{text}</span></></motion.div>
-);
+// --- SUB-COMPONENTS ---
 
 const StateStep = ({ onAnswer }: any) => (
   <div className="space-y-6 text-center">
@@ -166,7 +150,14 @@ const EligibleStep = ({ onCtaClick, affiliateLink }: any) => (
   <div className="space-y-6 text-center">
     <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto"><Check className="w-8 h-8 text-green-500" /></div>
     <h2 className="text-2xl font-semibold text-foreground">You're Eligible! 🎉</h2>
-    <motion.a href={affiliateLink} onClick={onCtaClick} className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-primary">
+    <p className="text-muted-foreground pb-4">Click below to claim your access.</p>
+    <motion.a 
+      href={affiliateLink} 
+      onClick={onCtaClick} 
+      className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-primary cursor-pointer"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
       Start Playing Now →
     </motion.a>
   </div>
@@ -181,7 +172,12 @@ const IneligibleStep = () => (
 );
 
 const QuizButton = ({ variant, onClick, children }: any) => (
-  <motion.button onClick={onClick} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold ${variant === "primary" ? "bg-primary text-primary-foreground glow-primary" : "bg-secondary text-secondary-foreground"}`}>
+  <motion.button 
+    onClick={onClick} 
+    whileHover={{ scale: 1.03 }} 
+    whileTap={{ scale: 0.97 }} 
+    className={`flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold ${variant === "primary" ? "bg-primary text-primary-foreground glow-primary" : "bg-secondary text-secondary-foreground"}`}
+  >
     {children}
   </motion.button>
 );
