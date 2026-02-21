@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
-import { Check, X, DollarSign, Shield, Zap } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 declare global {
   interface Window {
-    ttq: any;
     snaptr: any;
   }
 }
@@ -21,35 +20,27 @@ type Step = "state" | "age" | "eligible" | "ineligible";
 const Index = () => {
   const [step, setStep] = useState<Step>("state");
 
-  // Stable Affiliate Link Generation
+  // Stable Affiliate Link Generation for Snapchat Only
   const affiliateLink = useMemo(() => {
     if (typeof window === "undefined") return BASE_AFFILIATE_URL;
     
     const urlParams = new URLSearchParams(window.location.search);
-    const ttclid = urlParams.get("ttclid");
-    const sccid = urlParams.get("ScCid"); // Snapchat is case-sensitive (ScCid)
+    // Snapchat often uses ScCid, but trackers sometimes lowercase it to sccid
+    const sccid = urlParams.get("ScCid") || urlParams.get("sccid");
 
     let newLink = BASE_AFFILIATE_URL;
 
-    if (ttclid) {
-      newLink += `&aff_sub=${ttclid}&ttclid=${ttclid}`;
-    } else if (sccid) {
-      // We pass ScCid into aff_sub so your postback {aff_sub} works for both
+    if (sccid) {
+      // Pass sccid into aff_sub so your postback {aff_sub} maps to sccid on your server
       newLink += `&aff_sub=${sccid}&sccid=${sccid}`;
     }
     
     return newLink;
   }, []);
 
-  const track = (eventName: string) => {
-    console.log(`📡 [Tracking] Firing: ${eventName}`);
+  const trackSnap = (eventName: string) => {
+    console.log(`📡 [Snapchat Tracking] Firing: ${eventName}`);
 
-    // TikTok
-    if (typeof window !== "undefined" && window.ttq) {
-      window.ttq.track(eventName, { content_name: 'Backspin_Games' });
-    }
-
-    // Snapchat
     if (typeof window !== "undefined" && window.snaptr) {
       let snapEvent = 'PAGE_VIEW';
       if (eventName === 'ViewContent') snapEvent = 'PAGE_VIEW';
@@ -61,8 +52,8 @@ const Index = () => {
   };
 
   const handleStateAnswer = (inExcluded: boolean) => {
-    track("ViewContent");
-    track("SubmitForm"); 
+    trackSnap("ViewContent");
+    trackSnap("SubmitForm"); 
     setStep(inExcluded ? "ineligible" : "age");
   };
 
@@ -71,15 +62,15 @@ const Index = () => {
   };
 
   const handleCtaClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Stop the default <a> jump
-    track("ClickButton");
+    e.preventDefault(); 
+    trackSnap("ClickButton");
     
     console.log(`🔗 Redirecting to: ${affiliateLink}`);
     
-    // Tiny timeout to allow the pixel to fire before leaving the page
+    // Increased timeout slightly to ensure the Snap pixel fires before navigation
     setTimeout(() => {
       window.location.href = affiliateLink;
-    }, 150);
+    }, 250);
   };
 
   return (
